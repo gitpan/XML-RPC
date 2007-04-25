@@ -1,5 +1,9 @@
 # XML::RPC Changes
 
+2007/04/25  (0.02)
+    * Fixed empty hashrefs on returning values
+    * Single result values are no longer returned as list.
+
 2007/03/01  (0.01)
     * first release.
 

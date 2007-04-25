@@ -90,9 +90,10 @@ package XML::RPC;
 
 use strict;
 use XML::TreePP;
+use Data::Dumper;
 use vars qw($VERSION $faultCode);
 
-$VERSION = 0.1;
+$VERSION = 0.2;
 
 sub new {
     my $package = shift;
@@ -120,7 +121,9 @@ sub call {
             'Content-Length' => length($xml)
         }
     );
-    return $self->unparse_response($result);
+
+    my @data = $self->unparse_response($result);
+    return @data == 1 ? $data[0] : @data;
 }
 
 sub receive {
@@ -201,16 +204,15 @@ sub parse_scalar {
     my $scalar = shift;
     local $^W = undef;
 
-    # check for int4
     if (   ( $scalar =~ m/^[\-+]?\d+$/ )
         && ( abs($scalar) <= ( 0xffffffff >> 1 ) ) )
     {
         return { i4 => $scalar };
     }
-    elsif ( $scalar =~ m/^[\-+]?\d+\.\d+$/ ) {    # double has no limits
+    elsif ( $scalar =~ m/^[\-+]?\d+\.\d+$/ ) {
         return { double => $scalar };
     }
-    else {                                        # everything else
+    else {
         return { string => $scalar };
     }
 }
@@ -292,7 +294,9 @@ sub unparse_scalar {
     my $self     = shift;
     my $scalar   = shift;
     my ($result) = values(%$scalar);
-    return $result;
+    return ( ref($result) eq 'HASH' && !%$result )
+      ? undef
+      : $result;    # fix for empty hashrefs from XML::TreePP
 }
 
 sub unparse_struct {
