@@ -93,7 +93,7 @@ use XML::TreePP;
 use Data::Dumper;
 use vars qw($VERSION $faultCode);
 
-$VERSION = 0.2;
+$VERSION = 0.3;
 
 sub new {
     my $package = shift;
@@ -310,7 +310,7 @@ sub unparse_struct {
 sub unparse_array {
     my $self  = shift;
     my $array = shift;
-    my $data  = $array->{data};
+    my $data  = $array->{data} || {};
 
     return [ map { $self->unparse_value($_) } $self->list( $data->{value} ) ];
 }

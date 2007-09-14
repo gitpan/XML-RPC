@@ -1,9 +1,12 @@
 # XML::RPC Changes
 
-2007/04/25  (0.02)
+2007/09/14  (0.3)
+    * Fixed a ref test for updated XML::TreePP.
+
+2007/04/25  (0.2)
     * Fixed empty hashrefs on returning values
     * Single result values are no longer returned as list.
 
-2007/03/01  (0.01)
+2007/03/01  (0.1)
     * first release.
 
