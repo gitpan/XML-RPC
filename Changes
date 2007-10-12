@@ -1,5 +1,9 @@
 # XML::RPC Changes
 
+2007/10/12  (0.4)
+    * Fixed some more ref tests.
+    * String values are now always CDATA enclosed.
+
 2007/09/14  (0.3)
     * Fixed a ref test for updated XML::TreePP.
 
@@ -9,4 +13,3 @@
 
 2007/03/01  (0.1)
     * first release.
-

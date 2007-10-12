@@ -1,4 +1,3 @@
-
 =head1 NAME
 
 XML::RPC -- Pure Perl implementation for an XML-RPC client and server.
@@ -93,7 +92,7 @@ use XML::TreePP;
 use Data::Dumper;
 use vars qw($VERSION $faultCode);
 
-$VERSION = 0.3;
+$VERSION = 0.4;
 
 sub new {
     my $package = shift;
@@ -144,15 +143,8 @@ sub create_fault_xml {
     my $self  = shift;
     my $error = shift;
     chomp($error);
-    return $self->{tpp}->write(
-        {
-            methodResponse => {
-                fault => $self->parse(
-                    { faultString => $error, faultCode => $faultCode }
-                )
-            }
-        }
-    );
+    return $self->{tpp}
+      ->write( { methodResponse => { fault => $self->parse( { faultString => $error, faultCode => $faultCode } ) } } );
 }
 
 sub create_call_xml {
@@ -173,12 +165,7 @@ sub create_response_xml {
     my $self   = shift;
     my @params = @_;
 
-    return $self->{tpp}->write(
-        {
-            methodResponse =>
-              { params => { param => [ map { $self->parse($_) } @params ] } }
-        }
-    );
+    return $self->{tpp}->write( { methodResponse => { params => { param => [ map { $self->parse($_) } @params ] } } } );
 }
 
 sub parse {
@@ -213,13 +200,13 @@ sub parse_scalar {
         return { double => $scalar };
     }
     else {
-        return { string => $scalar };
+        return { string => \$scalar };
     }
 }
 
 sub parse_struct {
     my $self = shift;
-    my $hash = shift;
+    my $hash = shift || {};
     my @members;
     while ( my ( $k, $v ) = each(%$hash) ) {
         push @members, { name => $k, %{ $self->parse($v) } };
@@ -231,19 +218,12 @@ sub parse_array {
     my $self  = shift;
     my $array = shift;
 
-    return {
-        array => {
-            data => {
-                value =>
-                  [ map { $self->parse($_)->{value} } $self->list($array) ]
-            }
-        }
-    };
+    return { array => { data => { value => [ map { $self->parse($_)->{value} } $self->list($array) ] } } };
 }
 
 sub unparse_response {
     my $self = shift;
-    my $hash = shift;
+    my $hash = shift || {};
 
     my $response = $hash->{methodResponse} || die 'no data';
 
@@ -251,22 +231,19 @@ sub unparse_response {
         return $self->unparse_value( $response->{fault}->{value} );
     }
     else {
-        return
-          map { $self->unparse_value( $_->{value} ) }
-          $self->list( $response->{params}->{param} );
+        return map { $self->unparse_value( $_->{value} ) } $self->list( $response->{params}->{param} );
     }
 }
 
 sub unparse_call {
     my $self = shift;
-    my $hash = shift;
+    my $hash = shift || {};
 
     my $response = $hash->{methodCall} || die 'no data';
 
     my $methodname = $response->{methodName};
     my @args =
-      map { $self->unparse_value( $_->{value} ) }
-      $self->list( $response->{params}->{param} );
+      map { $self->unparse_value( $_->{value} ) } $self->list( $response->{params}->{param} );
     return ( $methodname, @args );
 }
 
@@ -280,7 +257,7 @@ sub unparse_value {
         $result = $self->unparse_struct( $value->{struct} );
         return !%$result
           ? undef
-          : $result;    # fix for empty hashrefs from XML::TreePP
+          : $result;                               # fix for empty hashrefs from XML::TreePP
     }
     elsif ( $value->{array} ) {
         return $self->unparse_array( $value->{array} );
@@ -292,7 +269,7 @@ sub unparse_value {
 
 sub unparse_scalar {
     my $self     = shift;
-    my $scalar   = shift;
+    my $scalar   = shift || {};
     my ($result) = values(%$scalar);
     return ( ref($result) eq 'HASH' && !%$result )
       ? undef
@@ -300,16 +277,15 @@ sub unparse_scalar {
 }
 
 sub unparse_struct {
-    my $self   = shift;
-    my $struct = shift;
+    my $self = shift;
+    my $struct = shift || {};
 
-    return { map { $_->{name} => $self->unparse_value( $_->{value} ) }
-          $self->list( $struct->{member} ) };
+    return { map { $_->{name} => $self->unparse_value( $_->{value} ) } $self->list( $struct->{member} ) };
 }
 
 sub unparse_array {
     my $self  = shift;
-    my $array = shift;
+    my $array = shift || {};
     my $data  = $array->{data} || {};
 
     return [ map { $self->unparse_value($_) } $self->list( $data->{value} ) ];
