@@ -1,5 +1,8 @@
 # XML::RPC Changes
 
+2007/11/07  (0.5)
+    * No more strict refs.
+
 2007/10/12  (0.4)
     * Fixed some more ref tests.
     * String values are now always CDATA enclosed.

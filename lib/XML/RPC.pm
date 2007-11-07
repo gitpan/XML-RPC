@@ -1,3 +1,4 @@
+
 =head1 NAME
 
 XML::RPC -- Pure Perl implementation for an XML-RPC client and server.
@@ -18,7 +19,7 @@ create a XML-RPC service:
     my $xmlrpc = XML::RPC->new();
     my $xml    = $q->param('POSTDATA');
 
-    print $q->header( -type => 'text/xml', charset => 'UTF-8' );
+    print $q->header( -type => 'text/xml', -charset => 'UTF-8' );
     print $xmlrpc->receive( $xml, \&handler );
 
     sub handler {
@@ -91,8 +92,9 @@ use strict;
 use XML::TreePP;
 use Data::Dumper;
 use vars qw($VERSION $faultCode);
+no strict 'refs';
 
-$VERSION = 0.4;
+$VERSION = 0.5;
 
 sub new {
     my $package = shift;
@@ -206,7 +208,7 @@ sub parse_scalar {
 
 sub parse_struct {
     my $self = shift;
-    my $hash = shift || {};
+    my $hash = shift;
     my @members;
     while ( my ( $k, $v ) = each(%$hash) ) {
         push @members, { name => $k, %{ $self->parse($v) } };
@@ -223,7 +225,7 @@ sub parse_array {
 
 sub unparse_response {
     my $self = shift;
-    my $hash = shift || {};
+    my $hash = shift;
 
     my $response = $hash->{methodResponse} || die 'no data';
 
@@ -237,7 +239,7 @@ sub unparse_response {
 
 sub unparse_call {
     my $self = shift;
-    my $hash = shift || {};
+    my $hash = shift;
 
     my $response = $hash->{methodCall} || die 'no data';
 
@@ -269,7 +271,7 @@ sub unparse_value {
 
 sub unparse_scalar {
     my $self     = shift;
-    my $scalar   = shift || {};
+    my $scalar   = shift;
     my ($result) = values(%$scalar);
     return ( ref($result) eq 'HASH' && !%$result )
       ? undef
@@ -277,16 +279,16 @@ sub unparse_scalar {
 }
 
 sub unparse_struct {
-    my $self = shift;
-    my $struct = shift || {};
+    my $self   = shift;
+    my $struct = shift;
 
     return { map { $_->{name} => $self->unparse_value( $_->{value} ) } $self->list( $struct->{member} ) };
 }
 
 sub unparse_array {
     my $self  = shift;
-    my $array = shift || {};
-    my $data  = $array->{data} || {};
+    my $array = shift;
+    my $data  = $array->{data};
 
     return [ map { $self->unparse_value($_) } $self->list( $data->{value} ) ];
 }
@@ -294,7 +296,6 @@ sub unparse_array {
 sub list {
     my $self  = shift;
     my $param = shift;
-
     return () if ( !$param );
     return @$param if ( ref($param) eq 'ARRAY' );
     return ($param);
