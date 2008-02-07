@@ -1,5 +1,9 @@
 # XML::RPC Changes
 
+2008/02/07  (0.6)
+    * Added support for custom types.
+    * faultCode is forced as int.
+
 2007/11/07  (0.5)
     * No more strict refs.
 

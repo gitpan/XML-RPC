@@ -57,10 +57,16 @@ This method calls the provides XML-RPC server's method_name with
 This parses an incoming XML-RPC methodCall and call the \&handler subref
 with parameters: $methodName and @parameters.
 
+=head1 CUSTOM TYPES
+
+=head2 $xmlrpc->call( 'method_name', { data => sub { { 'base64' => encode_base64($data) } } } );
+
+When passing a CODEREF to a value XML::RPC will simply use the returned hashref as a type => value pair.
+
 =head1 ERROR HANDLING
 
 To provide an error response you can simply die() in the \&handler
-function. Also you can set the $XML::RPC::faultCode variable to a value
+function. Also you can set the $XML::RPC::faultCode variable to a (int) value
 just before dieing.
 
 =head1 PROXY SUPPORT
@@ -71,8 +77,9 @@ set a proxy.
 
 =head1 LIMITATIONS
 
-XML::RPC will not create "bool", "dateTime.iso8601" or "base64" types.
-They will be parsed as "int" or "string".
+XML::RPC will not create "bool", "dateTime.iso8601" or "base64" types
+automatically. They will be parsed as "int" or "string". You can use the 
+CODE ref to create these types.
 
 =head1 AUTHOR
 
@@ -80,7 +87,7 @@ Niek Albers, http://www.daansystems.com/
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2007 Niek Albers.  All rights reserved.  This program
+Copyright (c) 2007-2008 Niek Albers.  All rights reserved.  This program
 is free software; you can redistribute it and/or modify it under the same
 terms as Perl itself.
 
@@ -94,7 +101,7 @@ use Data::Dumper;
 use vars qw($VERSION $faultCode);
 no strict 'refs';
 
-$VERSION = 0.5;
+$VERSION = 0.6;
 
 sub new {
     my $package = shift;
@@ -113,6 +120,7 @@ sub call {
 
     $faultCode = 0;
     my $xml = $self->create_call_xml( $methodname, @params );
+    warn $xml;
     my $result = $self->{tpp}->parsehttp(
         POST => $self->{url},
         $xml,
@@ -146,7 +154,7 @@ sub create_fault_xml {
     my $error = shift;
     chomp($error);
     return $self->{tpp}
-      ->write( { methodResponse => { fault => $self->parse( { faultString => $error, faultCode => $faultCode } ) } } );
+      ->write( { methodResponse => { fault => $self->parse( { faultString => $error, faultCode => int($faultCode) } ) } } );
 }
 
 sub create_call_xml {
@@ -180,6 +188,9 @@ sub parse {
     }
     elsif ( ref($p) eq 'ARRAY' ) {
         $result = $self->parse_array($p);
+    }
+    elsif ( ref($p) eq 'CODE' ) {
+        $result = $p->();
     }
     else {
         $result = $self->parse_scalar($p);
