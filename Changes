@@ -1,5 +1,8 @@
 # XML::RPC Changes
 
+2008/02/07  (0.7)
+    * Removed debugging warning.
+
 2008/02/07  (0.6)
     * Added support for custom types.
     * faultCode is forced as int.

@@ -120,7 +120,6 @@ sub call {
 
     $faultCode = 0;
     my $xml = $self->create_call_xml( $methodname, @params );
-    warn $xml;
     my $result = $self->{tpp}->parsehttp(
         POST => $self->{url},
         $xml,
