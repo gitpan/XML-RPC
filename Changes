@@ -1,5 +1,11 @@
 # XML::RPC Changes
 
+2008/04/16  (0.8)
+    * Fixed 'each()' bug iterating over hashref.
+    * Added xml_in() and xml_out() methods.
+    * Fixed $faultCode warning (thanks JW).
+    * Fixed some pod.
+
 2008/02/07  (0.7)
     * Removed debugging warning.
 

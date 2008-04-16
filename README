@@ -2,12 +2,14 @@ NAME
     XML::RPC -- Pure Perl implementation for an XML-RPC client and server.
 
 SYNOPSIS
-    make a call to a XML-RPC server:
+    make a call to an XML-RPC server:
+
+        use XML::RPC;
 
         my $xmlrpc = XML::RPC->new('http://betty.userland.com/RPC2');
         my $result = $xmlrpc->call( 'examples.getStateStruct', { state1 => 12, state2 => 28 } );
 
-    create a XML-RPC service:
+    create an XML-RPC service:
 
         use XML::RPC;
         use CGI;
@@ -48,6 +50,12 @@ METHODS
     This parses an incoming XML-RPC methodCall and call the \&handler subref
     with parameters: $methodName and @parameters.
 
+  $xmlrpc->xml_in();
+    Returns the last XML that went in the client.
+
+  $xmlrpc->xml_out();
+    Returns the last XML that went out the client.
+
 CUSTOM TYPES
   $xmlrpc->call( 'method_name', { data => sub { { 'base64' => encode_base64($data) } } } );
     When passing a CODEREF to a value XML::RPC will simply use the returned
@@ -71,7 +79,7 @@ AUTHOR
     Niek Albers, http://www.daansystems.com/
 
 COPYRIGHT AND LICENSE
-    Copyright (c) 2007-2008 Niek Albers. All rights reserved. This program is
-    free software; you can redistribute it and/or modify it under the same
-    terms as Perl itself.
+    Copyright (c) 2007-2008 Niek Albers. All rights reserved. This program
+    is free software; you can redistribute it and/or modify it under the
+    same terms as Perl itself.
 

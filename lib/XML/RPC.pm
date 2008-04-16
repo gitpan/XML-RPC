@@ -5,12 +5,14 @@ XML::RPC -- Pure Perl implementation for an XML-RPC client and server.
 
 =head1 SYNOPSIS
 
-make a call to a XML-RPC server:
+make a call to an XML-RPC server:
+
+    use XML::RPC;
 
     my $xmlrpc = XML::RPC->new('http://betty.userland.com/RPC2');
     my $result = $xmlrpc->call( 'examples.getStateStruct', { state1 => 12, state2 => 28 } );
 
-create a XML-RPC service:
+create an XML-RPC service:
 
     use XML::RPC;
     use CGI;
@@ -57,6 +59,14 @@ This method calls the provides XML-RPC server's method_name with
 This parses an incoming XML-RPC methodCall and call the \&handler subref
 with parameters: $methodName and @parameters.
 
+=head2 $xmlrpc->xml_in();
+
+Returns the last XML that went in the client.
+
+=head2 $xmlrpc->xml_out();
+
+Returns the last XML that went out the client.
+
 =head1 CUSTOM TYPES
 
 =head2 $xmlrpc->call( 'method_name', { data => sub { { 'base64' => encode_base64($data) } } } );
@@ -97,11 +107,11 @@ package XML::RPC;
 
 use strict;
 use XML::TreePP;
-use Data::Dumper;
 use vars qw($VERSION $faultCode);
 no strict 'refs';
 
-$VERSION = 0.6;
+$VERSION   = 0.8;
+$faultCode = 0;
 
 sub new {
     my $package = shift;
@@ -119,16 +129,21 @@ sub call {
     die 'no url' if ( !$self->{url} );
 
     $faultCode = 0;
-    my $xml = $self->create_call_xml( $methodname, @params );
-    my $result = $self->{tpp}->parsehttp(
+    my $xml_out = $self->create_call_xml( $methodname, @params );
+
+    $self->{xml_out} = $xml_out;
+
+    my ( $result, $xml_in ) = $self->{tpp}->parsehttp(
         POST => $self->{url},
-        $xml,
+        $xml_out,
         {
             'Content-Type'   => 'text/xml',
             'User-Agent'     => 'XML-RPC/' . $VERSION,
-            'Content-Length' => length($xml)
+            'Content-Length' => length($xml_out)
         }
     );
+
+    $self->{xml_in} = $xml_in;
 
     my @data = $self->unparse_response($result);
     return @data == 1 ? $data[0] : @data;
@@ -137,13 +152,16 @@ sub call {
 sub receive {
     my $self   = shift;
     my $result = eval {
-        my $xml     = shift || die 'no xml';
+        my $xml_in = shift || die 'no xml';
+        $self->{xml_in} = $xml_in;
         my $handler = shift || die 'no handler';
-        my $hash = $self->{tpp}->parse($xml);
+        my $hash = $self->{tpp}->parse($xml_in);
         my ( $methodname, @params ) = $self->unparse_call($hash);
         $self->create_response_xml( $handler->( $methodname, @params ) );
     };
-    return $self->create_fault_xml($@) if ($@);
+
+    $result = $self->create_fault_xml($@) if ($@);
+    $self->{xml_out} = $result;
     return $result;
 
 }
@@ -219,11 +237,8 @@ sub parse_scalar {
 sub parse_struct {
     my $self = shift;
     my $hash = shift;
-    my @members;
-    while ( my ( $k, $v ) = each(%$hash) ) {
-        push @members, { name => $k, %{ $self->parse($v) } };
-    }
-    return { struct => { member => \@members } };
+
+    return { struct => { member => [ map { { name => $_, %{ $self->parse( $hash->{$_} ) } } } keys(%$hash) ] } };
 }
 
 sub parse_array {
@@ -310,5 +325,9 @@ sub list {
     return @$param if ( ref($param) eq 'ARRAY' );
     return ($param);
 }
+
+sub xml_in { shift->{xml_in} }
+
+sub xml_out { shift->{xml_out} }
 
 1;
