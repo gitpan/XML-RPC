@@ -1,5 +1,9 @@
 # XML::RPC Changes
 
+2009/01/01  (0.9) (by Alexandr Ciornii)
+    * better Makefile.PL
+    * 2 tests added
+
 2008/04/16  (0.8)
     * Fixed 'each()' bug iterating over hashref.
     * Added xml_in() and xml_out() methods.

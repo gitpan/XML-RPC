@@ -110,7 +110,7 @@ use XML::TreePP;
 use vars qw($VERSION $faultCode);
 no strict 'refs';
 
-$VERSION   = 0.8;
+$VERSION   = 0.9;
 $faultCode = 0;
 
 sub new {
